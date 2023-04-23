@@ -14,4 +14,7 @@ migratedrop:
 sqlc:
 	sqlc generate
 
-.PONY: migrateup migratedown
+test:
+	go test -v -cover ./...
+
+.PONY: migratecreate migrateup migratedown migratedrop sqlc test
