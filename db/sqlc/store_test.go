@@ -105,3 +105,57 @@ func TestTransferTx(t *testing.T) {
 	wg.Wait()
 
 }
+
+func TestTransferTxDeadlock(t *testing.T) {
+	store := NewStore(testDB)
+
+	account1 := createRandomAccount(t)
+	account2 := createRandomAccount(t)
+
+	n := 10
+	errChan := make(chan error)
+
+	var wg sync.WaitGroup
+
+	wg.Add(n)
+	for i := 0; i < n; i++ {
+		var arg TransferTxParams
+		if i%2 == 0 {
+			arg = TransferTxParams{
+				FromAccountID: account1.ID,
+				ToAccountID:   account2.ID,
+				Amount:        10,
+			}
+		} else {
+			arg = TransferTxParams{
+				FromAccountID: account2.ID,
+				ToAccountID:   account1.ID,
+				Amount:        10,
+			}
+		}
+		go func(errChan chan error, arg TransferTxParams) {
+			defer wg.Done()
+
+			_, err := store.TransferTx(context.Background(), arg)
+			errChan <- err
+		}(errChan, arg)
+	}
+
+	for i := 0; i < n; i++ {
+		err := <-errChan
+
+		require.NoError(t, err)
+	}
+
+	// check the final updated balance
+	updateAccount1, err := store.GetAccount(context.Background(), account1.ID)
+	require.NoError(t, err)
+	require.Equal(t, updateAccount1.Balance, account1.Balance)
+
+	updateAccount2, err := store.GetAccount(context.Background(), account2.ID)
+	require.NoError(t, err)
+	require.Equal(t, updateAccount2.Balance, account2.Balance)
+
+	wg.Wait()
+
+}
