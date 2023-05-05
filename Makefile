@@ -17,4 +17,7 @@ sqlc:
 test:
 	go test -v -cover ./...
 
-.PONY: migratecreate migrateup migratedown migratedrop sqlc test
+server:
+	go run main.go
+
+.PONY: migratecreate migrateup migratedown migratedrop sqlc test server
