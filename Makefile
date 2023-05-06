@@ -20,4 +20,7 @@ test:
 server:
 	go run main.go
 
-.PONY: migratecreate migrateup migratedown migratedrop sqlc test server
+mock:
+	mockgen -destination db/mock/store.go -package mockdb github.com/chensheep/simple-bank-backend/db/sqlc Store
+
+.PONY: migratecreate migrateup migratedown migratedrop sqlc test server mock
