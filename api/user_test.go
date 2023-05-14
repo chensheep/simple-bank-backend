@@ -186,7 +186,7 @@ func TestCreateUser(t *testing.T) {
 			mockstore := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(mockstore)
 
-			server := NewServer(mockstore)
+			server := newTestServer(t, mockstore)
 			w := httptest.NewRecorder()
 
 			arg, err := json.Marshal(tc.body)
@@ -228,4 +228,36 @@ func createRandomUser(t *testing.T) (db.User, string) {
 		FullName:       util.RandomOwner(),
 		Email:          util.RandomEmail(),
 	}, password
+}
+
+func TestLoginUser(t *testing.T) {
+	user, password := createRandomUser(t)
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockStore := mockdb.NewMockStore(mockCtrl)
+	mockStore.EXPECT().
+		GetUser(gomock.Any(), gomock.Eq(user.Username)).
+		Times(1).
+		Return(user, nil)
+
+	server := newTestServer(t, mockStore)
+	w := httptest.NewRecorder()
+
+	body := gin.H{
+		"username": user.Username,
+		"password": password,
+	}
+
+	arg2, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	r, err := http.NewRequest("POST", "/users/login", bytes.NewReader(arg2))
+	require.NoError(t, err)
+
+	server.router.ServeHTTP(w, r)
+	require.Equal(t, http.StatusOK, w.Code)
+	t.Log(w.Body.String())
+
 }

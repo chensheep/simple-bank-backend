@@ -86,7 +86,7 @@ func TestGetAccount(t *testing.T) {
 			// build stubs
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore)
+			server := newTestServer(t, mockStore)
 			w := httptest.NewRecorder()
 
 			r, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/accounts/%d", tc.accountID), nil)
@@ -171,7 +171,7 @@ func TestCreateAccount(t *testing.T) {
 			// build stubs
 			tc.buildStubs(mockStore)
 
-			server := NewServer(mockStore)
+			server := newTestServer(t, mockStore)
 			w := httptest.NewRecorder()
 
 			arg, err := json.Marshal(tc.body)
