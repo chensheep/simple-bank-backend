@@ -241,6 +241,8 @@ func TestLoginUser(t *testing.T) {
 		GetUser(gomock.Any(), gomock.Eq(user.Username)).
 		Times(1).
 		Return(user, nil)
+	mockStore.EXPECT().
+		CreateSession(gomock.Any(), gomock.Any()).Times(1)
 
 	server := newTestServer(t, mockStore)
 	w := httptest.NewRecorder()

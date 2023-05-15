@@ -23,11 +23,11 @@ func NewJWTMaker(secretKey string) (Maker, error) {
 	return &JWTMaker{secretKey: secretKey}, nil
 }
 
-func (maker *JWTMaker) CreateToken(username string, duration time.Duration) (string, error) {
+func (maker *JWTMaker) CreateToken(username string, duration time.Duration) (string, *Payload, error) {
 
 	payload, err := NewPayload(username, duration)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	// Create a new token object, specifying signing method and the claims
@@ -37,10 +37,10 @@ func (maker *JWTMaker) CreateToken(username string, duration time.Duration) (str
 	// Sign and get the complete encoded token as a string using the secret
 	tokenString, err := token.SignedString([]byte(maker.secretKey))
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
-	return tokenString, nil
+	return tokenString, payload, nil
 }
 
 func (maker *JWTMaker) VerifyToken(tokenString string) (*Payload, error) {
