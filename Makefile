@@ -1,4 +1,4 @@
-DB_URL=vim .mfddfpostgres://postgres:password@localhost:5435/simple-bank-2?sslmode=disable
+DB_URL=postgres://postgres:password@localhost:5435/simple-bank-2?sslmode=disable
 
 migratecreate:
 	migrate create -ext sql -dir db/migration -seq $(name)
