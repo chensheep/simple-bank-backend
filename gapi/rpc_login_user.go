@@ -8,8 +8,6 @@ import (
 	"github.com/chensheep/simple-bank-backend/pb"
 	"github.com/chensheep/simple-bank-backend/util"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -38,24 +36,24 @@ func (server *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (
 		return nil, status.Errorf(codes.Internal, "Failed to create refresh token %s", err)
 	}
 
-	p, ok := peer.FromContext(ctx)
-	if !ok {
-		return nil, status.Error(codes.Internal, "Failed to get peer from context")
-	}
+	// p, ok := peer.FromContext(ctx)
+	// if !ok {
+	// 	return nil, status.Error(codes.Internal, "Failed to get peer from context")
+	// }
 
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return nil, status.Error(codes.Internal, "Failed to get metadata")
-	}
+	// md, ok := metadata.FromIncomingContext(ctx)
+	// if !ok {
+	// 	return nil, status.Error(codes.Internal, "Failed to get metadata")
+	// }
 
 	session, err := server.store.CreateSession(ctx, db.CreateSessionParams{
 		ID:           refreshPayload.ID,
 		Username:     user.Username,
 		RefreshToken: refreshToken,
-		UserAgent:    md.Get("user-agent")[0],
-		ClientIp:     p.Addr.String(),
-		IsBlocked:    false,
-		ExpiredAt:    refreshPayload.ExpiredAt,
+		// UserAgent:    md.Get("user-agent")[0],
+		// ClientIp:     p.Addr.String(),
+		IsBlocked: false,
+		ExpiredAt: refreshPayload.ExpiredAt,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to create session %s", err)
