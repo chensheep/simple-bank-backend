@@ -36,24 +36,16 @@ func (server *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (
 		return nil, status.Errorf(codes.Internal, "Failed to create refresh token %s", err)
 	}
 
-	// p, ok := peer.FromContext(ctx)
-	// if !ok {
-	// 	return nil, status.Error(codes.Internal, "Failed to get peer from context")
-	// }
-
-	// md, ok := metadata.FromIncomingContext(ctx)
-	// if !ok {
-	// 	return nil, status.Error(codes.Internal, "Failed to get metadata")
-	// }
+	md := server.ExtractMetadata(ctx)
 
 	session, err := server.store.CreateSession(ctx, db.CreateSessionParams{
 		ID:           refreshPayload.ID,
 		Username:     user.Username,
 		RefreshToken: refreshToken,
-		// UserAgent:    md.Get("user-agent")[0],
-		// ClientIp:     p.Addr.String(),
-		IsBlocked: false,
-		ExpiredAt: refreshPayload.ExpiredAt,
+		UserAgent:    md.UserAgent,
+		ClientIp:     md.ClientIp,
+		IsBlocked:    false,
+		ExpiredAt:    refreshPayload.ExpiredAt,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to create session %s", err)
