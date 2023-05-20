@@ -37,6 +37,7 @@ db_schema:
 	dbml2sql --postgres -o doc/schema.sql doc/db.dbml
 
 gen_proto:
+	rm -f doc/swagger/*.swagger.json
 	rm -f pb/*.go
 	protoc --proto_path=./proto \
 	--go_out=pb --go_opt=paths=source_relative \
@@ -44,6 +45,7 @@ gen_proto:
 	--grpc-gateway_out=pb \
 	--grpc-gateway_opt logtostderr=true \
 	--grpc-gateway_opt paths=source_relative \
+	--openapiv2_out=doc/swagger --openapiv2_opt=allow_merge=true,merge_file_name=simple_bank \
 	proto/*.proto
 
 evans:
