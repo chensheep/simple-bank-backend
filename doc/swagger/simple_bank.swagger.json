@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "Simple Bank API",
-    "version": "1.0",
+    "version": "1.1",
     "contact": {
       "name": "Chensheep",
       "url": "https://github.com/chensheep/simple-bank-backend"
@@ -22,6 +22,8 @@
   "paths": {
     "/v1/create_user": {
       "post": {
+        "summary": "Create a new user",
+        "description": "Use this API to create a new user",
         "operationId": "SimpleBankService_CreateUser",
         "responses": {
           "200": {
@@ -54,6 +56,8 @@
     },
     "/v1/login_user": {
       "post": {
+        "summary": "Login user",
+        "description": "Use this API to login user and get access token \u0026 refresh token",
         "operationId": "SimpleBankService_LoginUser",
         "responses": {
           "200": {
