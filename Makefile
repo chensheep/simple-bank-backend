@@ -24,8 +24,11 @@ sqlc:
 test:
 	go test -v -cover ./...
 
-server:
-	go run main.go
+build:
+	go build -o bin/server main.go
+
+server: build
+	bin/server
 
 mock:
 	mockgen -destination db/mock/store.go -package mockdb github.com/chensheep/simple-bank-backend/db/sqlc Store
