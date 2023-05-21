@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"database/sql"
+	"embed"
+	"io/fs"
 	"log"
 	"net"
 	"net/http"
@@ -19,7 +21,12 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	_ "github.com/lib/pq"
+
+	_ "embed"
 )
+
+//go:embed doc/swagger/*
+var swaggerFS embed.FS
 
 func main() {
 
@@ -102,7 +109,11 @@ func createGatewayServer(config util.Config, store db.Store) {
 	mux := http.NewServeMux()
 	mux.Handle("/", grpcMux)
 
-	fs := http.FileServer(http.Dir("./doc/swagger"))
+	subFS, err := fs.Sub(swaggerFS, "doc/swagger")
+	if err != nil {
+		log.Fatalf("cannot load swagger files: %v", err)
+	}
+	fs := http.FileServer(http.FS(subFS))
 	mux.Handle("/swagger/", http.StripPrefix("/swagger/", fs))
 
 	listener, err := net.Listen("tcp", config.HTTPServerAddress)
