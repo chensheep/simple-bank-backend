@@ -1,5 +1,8 @@
 DB_URL=postgres://postgres:password@localhost:5435/simple-bank-2?sslmode=disable
 
+start_test_db:
+	docker start postgres-test
+
 migratecreate:
 	migrate create -ext sql -dir db/migration -seq $(name)
 
