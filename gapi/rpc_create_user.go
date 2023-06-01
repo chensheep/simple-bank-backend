@@ -41,7 +41,7 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 			}
 			options := []asynq.Option{
 				asynq.MaxRetry(10),
-				asynq.ProcessIn(10 * time.Second),
+				asynq.ProcessIn(10 * time.Second), // This is very important, otherwise create user transaction may not be committed yet
 				asynq.Queue(worker.QueueCritical),
 			}
 			err = server.taskDistributor.DistrubuteTaskSendVerifyEmailTask(ctx, &payload, options...)
