@@ -28,40 +28,43 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 		return nil, status.Errorf(codes.Internal, "failed to hash password: %s", err)
 	}
 
-	arg := db.CreateUserParams{
-		Username:       req.GetUsername(),
-		HashedPassword: hashedPassword,
-		FullName:       req.GetFullName(),
-		Email:          req.GetEmail(),
+	arg := db.CreateUserTxParams{
+		CreateUserParams: db.CreateUserParams{
+			Username:       req.GetUsername(),
+			HashedPassword: hashedPassword,
+			FullName:       req.GetFullName(),
+			Email:          req.GetEmail(),
+		},
+		AfterUserCreated: func(user db.User) error {
+			payload := worker.SendVerifyEmailPayload{
+				Username: user.Username,
+			}
+			options := []asynq.Option{
+				asynq.MaxRetry(10),
+				asynq.ProcessIn(10 * time.Second),
+				asynq.Queue(worker.QueueCritical),
+			}
+			err = server.taskDistributor.DistrubuteTaskSendVerifyEmailTask(ctx, &payload, options...)
+			if err != nil {
+				return status.Errorf(codes.Internal, "failed to distibute task send verify email : %s", err)
+			}
+			return nil
+		},
 	}
 
-	user, err := server.store.CreateUser(ctx, arg)
+	res, err := server.store.CreateUserTx(ctx, arg)
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {
 			switch pqErr.Code.Name() {
 			case "unique_violation":
-				return nil, status.Errorf(codes.AlreadyExists, "username already exists: %s", arg.Username)
+				return nil, status.Errorf(codes.AlreadyExists, "username already exists: %s", arg.CreateUserParams.Username)
 			}
 		}
 		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
 	}
 
-	// TODO: use db transaction to rollback if failed to send email
-	payload := worker.SendVerifyEmailPayload{
-		Username: user.Username,
-	}
-	options := []asynq.Option{
-		asynq.MaxRetry(10),
-		asynq.ProcessIn(10 * time.Second),
-		asynq.Queue(worker.QueueCritical),
-	}
-	err = server.taskDistributor.DistrubuteTaskSendVerifyEmailTask(ctx, &payload, options...)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to distibute task send verify email : %s", err)
-	}
-
 	rsp := &pb.CreateUserResponse{
-		User: convertUser(user),
+		User: convertUser(res.User),
 	}
 
 	return rsp, nil
