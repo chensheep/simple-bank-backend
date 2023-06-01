@@ -1,4 +1,11 @@
 DB_URL=postgres://postgres:password@localhost:5435/simple-bank-2?sslmode=disable
+TESTING_REDIS_CONTAINER_NAME=redis-simple
+
+create_test_redis:
+	docker run --name "$(TESTING_REDIS_CONTAINER_NAME)" -p 6379:6379 -d redis:7.0.11-alpine
+
+ping_test_redis:
+	docker exec -it "$(TESTING_REDIS_CONTAINER_NAME)" redis-cli ping
 
 start_test_db:
 	docker start postgres-test
@@ -57,4 +64,4 @@ gen_proto:
 evans:
 	evans --host localhost --port 9090 -r repl
 
-.PONY: migratecreate migrateup migratedown migratedrop migratedown1 migratedrop1 sqlc test server mock db_schema db_doc gen_proto evans
+.PONY: migratecreate migrateup migratedown migratedrop migratedown1 migratedrop1 sqlc test server mock db_schema db_doc gen_proto evans create_test_redis start_test_db ping_test_redis

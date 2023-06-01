@@ -7,6 +7,12 @@ import (
 	"github.com/hibiken/asynq"
 )
 
+const (
+	QueueCritical = "critical"
+	QueueDefault  = "default"
+	QueueLow      = "low"
+)
+
 type TaskProcessor interface {
 	Start() error
 	ProcessTaskSendVerifyEmail(context.Context, *asynq.Task) error
@@ -18,7 +24,13 @@ type RedisTaskProcessor struct {
 }
 
 func NewRedisTaskProcessor(r asynq.RedisConnOpt, store db.Store) *RedisTaskProcessor {
-	server := asynq.NewServer(r, asynq.Config{})
+	server := asynq.NewServer(r, asynq.Config{
+		Queues: map[string]int{
+			QueueCritical: 10,
+			QueueDefault:  5,
+			QueueLow:      1,
+		},
+	})
 	return &RedisTaskProcessor{
 		server: server,
 		store:  store,
@@ -30,7 +42,7 @@ func (processor *RedisTaskProcessor) Start() error {
 	mux.HandleFunc(TaskSendVerifyEmail, processor.ProcessTaskSendVerifyEmail)
 	// ...register other handlers...
 
-	if err := processor.server.Run(mux); err != nil {
+	if err := processor.server.Start(mux); err != nil {
 		return err
 	}
 

@@ -2,11 +2,14 @@ package gapi
 
 import (
 	"context"
+	"time"
 
 	db "github.com/chensheep/simple-bank-backend/db/sqlc"
 	"github.com/chensheep/simple-bank-backend/pb"
 	"github.com/chensheep/simple-bank-backend/util"
 	"github.com/chensheep/simple-bank-backend/val"
+	"github.com/chensheep/simple-bank-backend/worker"
+	"github.com/hibiken/asynq"
 	"github.com/lib/pq"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
@@ -41,6 +44,20 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 			}
 		}
 		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
+	}
+
+	// TODO: use db transaction to rollback if failed to send email
+	payload := worker.SendVerifyEmailPayload{
+		Username: user.Username,
+	}
+	options := []asynq.Option{
+		asynq.MaxRetry(10),
+		asynq.ProcessIn(10 * time.Second),
+		asynq.Queue(worker.QueueCritical),
+	}
+	err = server.taskDistributor.DistrubuteTaskSendVerifyEmailTask(ctx, &payload, options...)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to distibute task send verify email : %s", err)
 	}
 
 	rsp := &pb.CreateUserResponse{
