@@ -4,6 +4,7 @@ import (
 	"context"
 
 	db "github.com/chensheep/simple-bank-backend/db/sqlc"
+	"github.com/chensheep/simple-bank-backend/email"
 	"github.com/hibiken/asynq"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
@@ -21,11 +22,12 @@ type TaskProcessor interface {
 }
 
 type RedisTaskProcessor struct {
-	server *asynq.Server
-	store  db.Store
+	server      *asynq.Server
+	store       db.Store
+	emailSender email.EmailSender
 }
 
-func NewRedisTaskProcessor(r asynq.RedisConnOpt, store db.Store) *RedisTaskProcessor {
+func NewRedisTaskProcessor(r asynq.RedisConnOpt, store db.Store, emailSender email.EmailSender) *RedisTaskProcessor {
 	logger := NewLogger()
 	redis.SetLogger(logger)
 
@@ -42,8 +44,9 @@ func NewRedisTaskProcessor(r asynq.RedisConnOpt, store db.Store) *RedisTaskProce
 		Logger: logger,
 	})
 	return &RedisTaskProcessor{
-		server: server,
-		store:  store,
+		server:      server,
+		store:       store,
+		emailSender: emailSender,
 	}
 }
 

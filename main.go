@@ -15,6 +15,7 @@ import (
 
 	"github.com/chensheep/simple-bank-backend/api"
 	db "github.com/chensheep/simple-bank-backend/db/sqlc"
+	"github.com/chensheep/simple-bank-backend/email"
 	"github.com/chensheep/simple-bank-backend/gapi"
 	"github.com/chensheep/simple-bank-backend/pb"
 	"github.com/chensheep/simple-bank-backend/util"
@@ -53,7 +54,7 @@ func main() {
 
 	redisClientOpt := asynq.RedisClientOpt{Addr: config.RedisServerAddress}
 	taskDistributor := worker.NewRedisDistrubuter(redisClientOpt)
-	go runTaskProcessor(redisClientOpt, store)
+	go runTaskProcessor(config, redisClientOpt, store)
 
 	go createGatewayServer(config, store, taskDistributor)
 	createGRPCServer(config, store, taskDistributor)
@@ -72,8 +73,9 @@ func createGinServer(config util.Config, store db.Store) {
 	}
 }
 
-func runTaskProcessor(redisClientOpt asynq.RedisClientOpt, store db.Store) {
-	processor := worker.NewRedisTaskProcessor(redisClientOpt, store)
+func runTaskProcessor(config util.Config, redisClientOpt asynq.RedisClientOpt, store db.Store) {
+	emailSender := email.NewGmailSender(config.EmailSenderName, config.EmailSenderAddress, config.EmailSenderPassword)
+	processor := worker.NewRedisTaskProcessor(redisClientOpt, store, emailSender)
 	log.Info().Msg("start task processor")
 	err := processor.Start()
 	if err != nil {
