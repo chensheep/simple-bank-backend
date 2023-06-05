@@ -8,6 +8,7 @@ ping_test_redis:
 	docker exec -it "$(TESTING_REDIS_CONTAINER_NAME)" redis-cli ping
 
 start_test_db:
+	docker start $(TESTING_REDIS_CONTAINER_NAME)
 	docker start postgres-test
 
 migratecreate:
@@ -32,7 +33,7 @@ sqlc:
 	sqlc generate
 
 test:
-	go test -v -cover ./...
+	go test -short -v -cover ./...
 
 build:
 	go build -o bin/server main.go
