@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	SimpleBankService_CreateUser_FullMethodName = "/pb.SimpleBankService/CreateUser"
-	SimpleBankService_LoginUser_FullMethodName  = "/pb.SimpleBankService/LoginUser"
-	SimpleBankService_UpdateUser_FullMethodName = "/pb.SimpleBankService/UpdateUser"
+	SimpleBankService_CreateUser_FullMethodName  = "/pb.SimpleBankService/CreateUser"
+	SimpleBankService_LoginUser_FullMethodName   = "/pb.SimpleBankService/LoginUser"
+	SimpleBankService_UpdateUser_FullMethodName  = "/pb.SimpleBankService/UpdateUser"
+	SimpleBankService_VerifyEmail_FullMethodName = "/pb.SimpleBankService/VerifyEmail"
 )
 
 // SimpleBankServiceClient is the client API for SimpleBankService service.
@@ -31,6 +32,7 @@ type SimpleBankServiceClient interface {
 	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
 	LoginUser(ctx context.Context, in *LoginUserRequest, opts ...grpc.CallOption) (*LoginUserResponse, error)
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
+	VerifyEmail(ctx context.Context, in *VerifyEmailRequest, opts ...grpc.CallOption) (*VerifyEmailResponse, error)
 }
 
 type simpleBankServiceClient struct {
@@ -68,6 +70,15 @@ func (c *simpleBankServiceClient) UpdateUser(ctx context.Context, in *UpdateUser
 	return out, nil
 }
 
+func (c *simpleBankServiceClient) VerifyEmail(ctx context.Context, in *VerifyEmailRequest, opts ...grpc.CallOption) (*VerifyEmailResponse, error) {
+	out := new(VerifyEmailResponse)
+	err := c.cc.Invoke(ctx, SimpleBankService_VerifyEmail_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SimpleBankServiceServer is the server API for SimpleBankService service.
 // All implementations must embed UnimplementedSimpleBankServiceServer
 // for forward compatibility
@@ -75,6 +86,7 @@ type SimpleBankServiceServer interface {
 	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
 	LoginUser(context.Context, *LoginUserRequest) (*LoginUserResponse, error)
 	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
+	VerifyEmail(context.Context, *VerifyEmailRequest) (*VerifyEmailResponse, error)
 	mustEmbedUnimplementedSimpleBankServiceServer()
 }
 
@@ -90,6 +102,9 @@ func (UnimplementedSimpleBankServiceServer) LoginUser(context.Context, *LoginUse
 }
 func (UnimplementedSimpleBankServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
+}
+func (UnimplementedSimpleBankServiceServer) VerifyEmail(context.Context, *VerifyEmailRequest) (*VerifyEmailResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VerifyEmail not implemented")
 }
 func (UnimplementedSimpleBankServiceServer) mustEmbedUnimplementedSimpleBankServiceServer() {}
 
@@ -158,6 +173,24 @@ func _SimpleBankService_UpdateUser_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SimpleBankService_VerifyEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimpleBankServiceServer).VerifyEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SimpleBankService_VerifyEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimpleBankServiceServer).VerifyEmail(ctx, req.(*VerifyEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SimpleBankService_ServiceDesc is the grpc.ServiceDesc for SimpleBankService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -176,6 +209,10 @@ var SimpleBankService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateUser",
 			Handler:    _SimpleBankService_UpdateUser_Handler,
+		},
+		{
+			MethodName: "VerifyEmail",
+			Handler:    _SimpleBankService_VerifyEmail_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

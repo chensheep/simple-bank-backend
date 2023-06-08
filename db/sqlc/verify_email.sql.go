@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createVerifyEmail = `-- name: CreateVerifyEmail :one
@@ -27,6 +28,38 @@ type CreateVerifyEmailParams struct {
 
 func (q *Queries) CreateVerifyEmail(ctx context.Context, arg CreateVerifyEmailParams) (VerifyEmail, error) {
 	row := q.db.QueryRowContext(ctx, createVerifyEmail, arg.Username, arg.Email, arg.SecretCode)
+	var i VerifyEmail
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Email,
+		&i.SecretCode,
+		&i.IsUsed,
+		&i.CreatedAt,
+		&i.ExpiredAt,
+	)
+	return i, err
+}
+
+const updateVerifyEmail = `-- name: UpdateVerifyEmail :one
+UPDATE verify_emails 
+SET
+  is_used = COALESCE($1, is_used)
+WHERE id = $2
+  AND secret_code = $3
+  AND is_used = FALSE
+  AND expired_at > now()
+RETURNING id, username, email, secret_code, is_used, created_at, expired_at
+`
+
+type UpdateVerifyEmailParams struct {
+	IsUsed     sql.NullBool `json:"is_used"`
+	EmailID    int64        `json:"email_id"`
+	SecretCode string       `json:"secret_code"`
+}
+
+func (q *Queries) UpdateVerifyEmail(ctx context.Context, arg UpdateVerifyEmailParams) (VerifyEmail, error) {
+	row := q.db.QueryRowContext(ctx, updateVerifyEmail, arg.IsUsed, arg.EmailID, arg.SecretCode)
 	var i VerifyEmail
 	err := row.Scan(
 		&i.ID,
